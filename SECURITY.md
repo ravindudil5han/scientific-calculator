@@ -2,7 +2,7 @@
 
 ## 🔒 Privacy & Security Posture
 
-The **991CW Scientific Calculator** is designed with an offline-first, zero-trust architecture:
+The **Scientific Calculator** is designed with an offline-first, zero-trust architecture:
 
 - **Zero Permissions**: The application requests **no internet, storage, camera, location, or device identity permissions** (`AndroidManifest.xml` is completely permission-free).
 - **100% Offline Execution**: All mathematical evaluations, symbolic simplifications, spreadsheet calculations, and QR code generations happen locally on the user's device.
