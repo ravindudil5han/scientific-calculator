@@ -62,8 +62,8 @@ class _LcdDisplayWidgetState extends State<LcdDisplayWidget> {
     _updateOverflowFlags(state);
 
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 10),
-      padding: const EdgeInsets.all(8),
+      margin: const EdgeInsets.symmetric(horizontal: 6),
+      padding: const EdgeInsets.all(6),
       decoration: BoxDecoration(
         color: Cal_Theme.bezelMetallicOuter,
         borderRadius: BorderRadius.circular(11),
@@ -80,13 +80,13 @@ class _LcdDisplayWidgetState extends State<LcdDisplayWidget> {
         ],
       ),
       child: Container(
-        padding: const EdgeInsets.all(3),
+        padding: const EdgeInsets.all(2.5),
         decoration: BoxDecoration(
           color: Cal_Theme.bezelInnerRecess,
           borderRadius: BorderRadius.circular(7),
         ),
         child: AspectRatio(
-          aspectRatio: 2.65,
+          aspectRatio: 2.30,
           child: ClipRRect(
             borderRadius: BorderRadius.circular(5),
             child: RepaintBoundary(

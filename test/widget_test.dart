@@ -1200,7 +1200,7 @@ void main() {
       expect(controller.state.activeQrMatrix!.size, 29);
       expect(
         controller.state.activeQrMatrix!.payloadUrl,
-        contains('wes.Cal_.com'),
+        contains('oreveon.com'),
       );
 
       // Render QR Code onto 192x63 LCD FrameBuffer and verify finder patterns

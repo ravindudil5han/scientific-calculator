@@ -220,9 +220,9 @@ class _Cal_ChassisShellState extends State<Cal_ChassisShell> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           // Upper chassis expansion covering the camera cutout / notch area
-                          // plus the 52px top faceplate height from the former solar-cell header
+                          // balanced for the enlarged high-resolution LCD display
                           if (!isCompactLandscape)
-                            SizedBox(height: topNotchInset + 52.0)
+                            SizedBox(height: topNotchInset + 42.0)
                           else
                             const SizedBox(height: 8.0),
 
