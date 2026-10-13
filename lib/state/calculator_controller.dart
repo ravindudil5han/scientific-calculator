@@ -727,7 +727,9 @@ class CalculatorController extends ChangeNotifier {
         mat.rows,
         (ri) => List.generate(
           mat.cols,
-          (ci) => formatCal_Scalar(mat.get(ri, ci)),
+          (ci) => (ri == r && ci == c && _cellInputBuffer.isNotEmpty)
+              ? _cellInputBuffer
+              : formatCal_Scalar(mat.get(ri, ci)),
         ),
       ),
       activeRow: r,
@@ -752,7 +754,11 @@ class CalculatorController extends ChangeNotifier {
       rowHeaders: List.generate(vct.dimension, (i) => '${i + 1}'),
       cells: List.generate(
         vct.dimension,
-        (ri) => [formatCal_Scalar(vct.components[ri])],
+        (ri) => [
+          (ri == r && _cellInputBuffer.isNotEmpty)
+              ? _cellInputBuffer
+              : formatCal_Scalar(vct.components[ri]),
+        ],
       ),
       activeRow: r,
       activeCol: 0,
@@ -772,10 +778,14 @@ class CalculatorController extends ChangeNotifier {
     final List<String> colHeaders =
         model.isTwoVar ? ['x', 'y'] : ['x', 'Freq'];
     final List<List<String>> cells = List.generate(rows, (ri) {
-      final String col0 = formatCal_Scalar(_statX[ri]);
-      final String col1 = model.isTwoVar
-          ? formatCal_Scalar(ri < _statY.length ? _statY[ri] : 0.0)
-          : formatCal_Scalar(ri < _statFreq.length ? _statFreq[ri] : 1.0);
+      final String col0 = (ri == r && c == 0 && _cellInputBuffer.isNotEmpty)
+          ? _cellInputBuffer
+          : formatCal_Scalar(_statX[ri]);
+      final String col1 = (ri == r && c == 1 && _cellInputBuffer.isNotEmpty)
+          ? _cellInputBuffer
+          : (model.isTwoVar
+              ? formatCal_Scalar(ri < _statY.length ? _statY[ri] : 0.0)
+              : formatCal_Scalar(ri < _statFreq.length ? _statFreq[ri] : 1.0));
       return [col0, col1];
     });
     final String currentVal = _cellInputBuffer.isNotEmpty
@@ -846,10 +856,19 @@ class CalculatorController extends ChangeNotifier {
     if (_isDistributionListMode && dist.supportsListMode) {
       final int r = activeRow.clamp(0, _distListX.length - 1);
       final int c = activeCol.clamp(0, 1);
+      final double? liveTypedX = (c == 0 && _cellInputBuffer.isNotEmpty)
+          ? double.tryParse(_cellInputBuffer.replaceAll('−', '-'))
+          : null;
+      if (liveTypedX != null) {
+        _distListX[r] = liveTypedX;
+      }
       final List<List<String>> cells = List.generate(_distListX.length, (ri) {
         final double xVal = _distListX[ri];
         final double pVal = _computeDistProbForX(dist, xVal);
-        return [formatCal_Scalar(xVal), formatCal_Scalar(pVal)];
+        final String xDisplay = (ri == r && c == 0 && _cellInputBuffer.isNotEmpty)
+            ? _cellInputBuffer
+            : formatCal_Scalar(xVal);
+        return [xDisplay, formatCal_Scalar(pVal)];
       });
       final String currentVal = _cellInputBuffer.isNotEmpty
           ? _cellInputBuffer
@@ -863,11 +882,18 @@ class CalculatorController extends ChangeNotifier {
         activeCol: c,
         bottomInputBarText: c == 0
             ? 'x[${r + 1}] = $currentVal'
-            : 'P(x=${cells[r][0]}) = ${cells[r][1]}',
+            : cells[r][1],
         isEditingCell: _cellInputBuffer.isNotEmpty,
       );
     }
     final int r = activeRow.clamp(0, _distParams.length - 1);
+    if (_cellInputBuffer.isNotEmpty) {
+      final double? liveVal =
+          double.tryParse(_cellInputBuffer.replaceAll('−', '-'));
+      if (liveVal != null) {
+        _distParams[r] = (_distParams[r].$1, liveVal);
+      }
+    }
     final String currentVal = _cellInputBuffer.isNotEmpty
         ? _cellInputBuffer
         : formatCal_Scalar(_distParams[r].$2);
@@ -875,9 +901,14 @@ class CalculatorController extends ChangeNotifier {
       title: 'DIST',
       columnHeaders: [dist.label],
       rowHeaders: _distParams.map((p) => p.$1).toList(),
-      cells: _distParams
-          .map((p) => [formatCal_Scalar(p.$2)])
-          .toList(),
+      cells: List.generate(
+        _distParams.length,
+        (ri) => [
+          (ri == r && _cellInputBuffer.isNotEmpty)
+              ? _cellInputBuffer
+              : formatCal_Scalar(_distParams[ri].$2),
+        ],
+      ),
       activeRow: r,
       activeCol: 0,
       bottomInputBarText: '${_distParams[r].$1} = $currentVal',
@@ -925,15 +956,16 @@ class CalculatorController extends ChangeNotifier {
         ? [
             [for (int i = 0; i < colHeaders.length; i++) '0'],
           ]
-        : _tableRows
-            .map(
-              (row) => [
-                formatCal_Scalar(row.x),
-                row.fxText,
-                if (hasG) row.gxText ?? '0',
-              ],
-            )
-            .toList();
+        : List.generate(_tableRows.length, (ri) {
+            final row = _tableRows[ri];
+            return [
+              (ri == r && c == 0 && _cellInputBuffer.isNotEmpty)
+                  ? _cellInputBuffer
+                  : formatCal_Scalar(row.x),
+              row.fxText,
+              if (hasG) row.gxText ?? '0',
+            ];
+          });
 
     final String valStr = _cellInputBuffer.isNotEmpty
         ? _cellInputBuffer
@@ -972,7 +1004,9 @@ class CalculatorController extends ChangeNotifier {
         15,
         (ri) => List.generate(
           SpreadsheetSheet.numCols,
-          (ci) => sheet.getDisplay(ri, ci),
+          (ci) => (ri == r && ci == c && _cellInputBuffer.isNotEmpty)
+              ? _cellInputBuffer
+              : sheet.getDisplay(ri, ci),
         ),
       ),
       activeRow: r,
@@ -1002,7 +1036,12 @@ class CalculatorController extends ChangeNotifier {
         columnHeaders: colHeaders,
         rowHeaders: const ['P(x)'],
         cells: [
-          _polyCoeffs.map(formatCal_Scalar).toList(),
+          List.generate(
+            _polyCoeffs.length,
+            (ci) => (ci == c && _cellInputBuffer.isNotEmpty)
+                ? _cellInputBuffer
+                : formatCal_Scalar(_polyCoeffs[ci]),
+          ),
         ],
         activeRow: 0,
         activeCol: c,
@@ -1024,9 +1063,15 @@ class CalculatorController extends ChangeNotifier {
         title: 'SIML',
         columnHeaders: colHeaders,
         rowHeaders: List.generate(n, (i) => 'Eq${i + 1}'),
-        cells: _simulMatrix
-            .map((row) => row.map(formatCal_Scalar).toList())
-            .toList(),
+        cells: List.generate(
+          n,
+          (ri) => List.generate(
+            n + 1,
+            (ci) => (ri == r && ci == c && _cellInputBuffer.isNotEmpty)
+                ? _cellInputBuffer
+                : formatCal_Scalar(_simulMatrix[ri][ci]),
+          ),
+        ),
         activeRow: r,
         activeCol: c,
         bottomInputBarText: 'Eq${r + 1}[${colHeaders[c]}] = $valStr',
@@ -1051,7 +1096,12 @@ class CalculatorController extends ChangeNotifier {
       columnHeaders: colHeaders,
       rowHeaders: ['${_state.activeInequalitySign.symbol}0'],
       cells: [
-        _ineqCoeffs.map(formatCal_Scalar).toList(),
+        List.generate(
+          _ineqCoeffs.length,
+          (ci) => (ci == c && _cellInputBuffer.isNotEmpty)
+              ? _cellInputBuffer
+              : formatCal_Scalar(_ineqCoeffs[ci]),
+        ),
       ],
       activeRow: 0,
       activeCol: c,
@@ -1073,7 +1123,12 @@ class CalculatorController extends ChangeNotifier {
       columnHeaders: colHeaders,
       rowHeaders: [isXD ? 'X:D' : 'C:X'],
       cells: [
-        _ratioCoeffs.map(formatCal_Scalar).toList(),
+        List.generate(
+          _ratioCoeffs.length,
+          (ci) => (ci == c && _cellInputBuffer.isNotEmpty)
+              ? _cellInputBuffer
+              : formatCal_Scalar(_ratioCoeffs[ci]),
+        ),
       ],
       activeRow: 0,
       activeCol: c,
@@ -1246,8 +1301,11 @@ class CalculatorController extends ChangeNotifier {
       return;
     }
 
-    // If viewing multi-line solver results in Equation, Inequality, Ratio, Statistics, Distribution, return to grid (or startup menu for Math Box)
-    if (_state.multiLineResultLines != null) {
+    // If viewing multi-line solver results in Equation, Inequality, Ratio, Statistics, or standard result in Distribution, return to grid
+    if (_state.multiLineResultLines != null ||
+        (_state.activeMode == AppMode.distribution &&
+            _state.activeGridModel == null &&
+            _state.isResultDisplayed)) {
       _initializeAppMode(
         _state.activeMode,
         showStartupMenu: _state.activeMode == AppMode.mathBox,
@@ -1274,6 +1332,7 @@ class CalculatorController extends ChangeNotifier {
 
     // If inside a specialized app's grid editor that has a startup type-selection menu, pressing BACK returns to the startup menu
     if (_state.activeGridModel != null) {
+      _cellInputBuffer = '';
       final startupMenu =
           CwMenuTreeBuilder.buildAppStartupMenu(_state.activeMode);
       if (startupMenu != null) {
@@ -2482,6 +2541,7 @@ class CalculatorController extends ChangeNotifier {
           (d) => d.name == action.payload,
           orElse: () => DistributionType.normalPd,
         );
+        _cellInputBuffer = '';
         _isDistributionListMode = false;
         _resetDistributionParams(dist);
         final grid = _buildDistributionGridModel(dist, activeRow: 0);
@@ -2501,6 +2561,7 @@ class CalculatorController extends ChangeNotifier {
           (d) => d.name == action.payload,
           orElse: () => DistributionType.binomialPd,
         );
+        _cellInputBuffer = '';
         _isDistributionListMode = true;
         _resetDistributionParams(dist);
         final grid = _buildDistributionGridModel(dist, activeRow: 0, activeCol: 0);
@@ -3166,6 +3227,28 @@ class CalculatorController extends ChangeNotifier {
       _emit(_state.copyWith(menuBreadcrumbs: const []));
     }
 
+    if (_state.activeMode == AppMode.distribution &&
+        _state.activeGridModel == null &&
+        _state.isResultDisplayed) {
+      _cellInputBuffer = token.display;
+      final grid = _buildDistributionGridModel(
+        _state.activeDistribution,
+        activeRow: 0,
+      );
+      _emit(
+        _state.copyWith(
+          activeGridModel: () => grid,
+          multiLineResultLines: () => null,
+          multiLineResultTitle: () => null,
+          resultText: '',
+          isResultDisplayed: false,
+          isShift: false,
+          isAlpha: false,
+        ),
+      );
+      return;
+    }
+
     if (_state.activeGridModel != null) {
       _cellInputBuffer += token.display;
       _rebuildActiveGridAt(
@@ -3380,10 +3463,12 @@ class CalculatorController extends ChangeNotifier {
 
     double parseCellNumber(String s, double fallback) {
       if (s.isEmpty) return fallback;
-      final d = double.tryParse(s);
+      final normalized = s.replaceAll('−', '-');
+      final d = double.tryParse(normalized);
       if (d != null) return d;
       final evalRes = evaluateExpressionString(s, forceDecimal: true);
-      return double.tryParse(evalRes.decimalText) ?? fallback;
+      return double.tryParse(evalRes.decimalText.replaceAll('−', '-')) ??
+          fallback;
     }
 
     switch (_state.activeMode) {
@@ -3431,7 +3516,14 @@ class CalculatorController extends ChangeNotifier {
           if (rawInput.isNotEmpty && c == 0 && r < _distListX.length) {
             _distListX[r] = parseCellNumber(rawInput, _distListX[r]);
           }
-          final int nextR = advanceCursor && r + 1 < _distListX.length ? r + 1 : r;
+          if (advanceCursor &&
+              r + 1 >= _distListX.length &&
+              rawInput.isNotEmpty &&
+              _distListX.length < 30) {
+            _distListX.add(0.0);
+          }
+          final int nextR =
+              advanceCursor && r + 1 < _distListX.length ? r + 1 : r;
           _rebuildActiveGridAt(nextR, c);
           return;
         }
@@ -3577,20 +3669,27 @@ class CalculatorController extends ChangeNotifier {
           ),
       };
 
-      final String label =
-          dist == DistributionType.inverseNormal ? 'xInv' : 'P';
-      final String formatted = '$label = ${formatCal_Scalar(probOrVal)}';
+      final String formatted = formatCal_Scalar(probOrVal);
+      final evalRes = evaluateExpressionString(formatted);
+      _lastEvalResult = evalRes;
+      final updatedVars = Map<String, String>.from(_state.variables);
+      updatedVars['PreAns'] = updatedVars['Ans'] ?? '0';
+      updatedVars['Ans'] = formatted;
+
       _emit(
         _state.copyWith(
           activeGridModel: () => null,
-          multiLineResultTitle: () => dist.label,
-          multiLineResultLines: () => [
-            for (final p in _distParams)
-              '${p.$1} = ${formatCal_Scalar(p.$2)}',
-            formatted,
-          ],
-          multiLineCursorIndex: _distParams.length,
+          multiLineResultTitle: () => null,
+          multiLineResultLines: () => null,
+          multiLineCursorIndex: 0,
+          variables: updatedVars,
           resultText: formatted,
+          alternateResultText: () => evalRes.exactText != null &&
+                  evalRes.exactText != formatted
+              ? evalRes.exactText
+              : null,
+          isShowingExactForm: false,
+          activeFormatView: OutputFormatView.standard,
           isResultDisplayed: true,
         ),
       );
@@ -3672,6 +3771,13 @@ class CalculatorController extends ChangeNotifier {
 
     if (_state.activeGridModel != null) {
       _commitActiveGridCell(advanceCursor: true);
+      return;
+    }
+
+    if (_state.activeMode == AppMode.distribution &&
+        _state.activeGridModel == null &&
+        _state.isResultDisplayed) {
+      _initializeAppMode(AppMode.distribution, showStartupMenu: false);
       return;
     }
 

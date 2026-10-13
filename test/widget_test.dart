@@ -1296,6 +1296,11 @@ void main() {
           equals(['x', 'P']),
         );
 
+        // Typing '3' in row 0 updates x[1] and P in real-time before pressing EXE
+        controller.insertToken(const InputToken(display: '3', evalText: '3'));
+        expect(controller.state.activeGridModel!.cells[0][0], '3');
+        expect(controller.state.activeGridModel!.cells[0][1], '0.3125');
+
         // Pressing BACK from the Distribution table returns to the Distribution startup menu
         controller.pressBack();
         expect(controller.state.menuBreadcrumbs, isNotEmpty);
@@ -1303,6 +1308,27 @@ void main() {
           controller.state.currentBreadcrumb!.items.first.label,
           'Binomial PD',
         );
+
+        // Select Binomial PD -> Variable -> verify real-time parameter updates and standard result without 'P = '
+        controller.pressOk();
+        controller.pressCursorDown(); // Variable
+        controller.pressOk();
+        expect(controller.state.activeGridModel, isNotNull);
+        controller.insertToken(const InputToken(display: '2', evalText: '2'));
+        expect(controller.state.activeGridModel!.cells[0][0], '2');
+        controller.pressExe(); // N
+        controller.insertToken(const InputToken(display: '4', evalText: '4'));
+        expect(controller.state.activeGridModel!.cells[1][0], '4');
+        controller.pressExe(); // p
+        for (final ch in ['0', '.', '5']) {
+          controller.insertToken(InputToken(display: ch, evalText: ch));
+        }
+        expect(controller.state.activeGridModel!.cells[2][0], '0.5');
+        controller.pressExe(); // Evaluates Binomial PD(x=2, N=4, p=0.5) = 0.375 as standard result
+        expect(controller.state.isResultDisplayed, isTrue);
+        expect(controller.state.multiLineResultLines, isNull);
+        expect(controller.state.resultText, '0.375');
+        expect(controller.state.resultText.contains('P ='), isFalse);
 
         // 2. Enter Equation from HOME (index 9) -> Simul Equation, Polynomial, Solver
         controller.pressHome();

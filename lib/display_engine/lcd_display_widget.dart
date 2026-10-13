@@ -3081,9 +3081,12 @@ class _HiResCal_LcdPainter extends CustomPainter {
       const Rect.fromLTWH(0, 240, vWidth, 50),
       Paint()..color = _shade(1),
     );
+    final String barDisplayText = (model.isEditingCell && cursorVisible)
+        ? '${model.bottomInputBarText}▏'
+        : model.bottomInputBarText;
     _drawLeftText(
       canvas,
-      model.bottomInputBarText,
+      barDisplayText,
       const Offset(16, 252),
       fontSize: 22,
       fontWeight: FontWeight.w700,
