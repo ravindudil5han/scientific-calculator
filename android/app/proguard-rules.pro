@@ -6,5 +6,6 @@
 -keep class io.flutter.** { *; }
 -keep class io.flutter.plugins.** { *; }
 -dontwarn io.flutter.embedding.**
+-keep class androidx.multidex.** { *; }
 -optimizations !code/simplification/arithmetic,!code/simplification/cast,!field/*,!class/merging/*
 -allowaccessmodification

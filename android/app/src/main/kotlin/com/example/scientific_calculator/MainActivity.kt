@@ -1,4 +1,4 @@
-package com.example.scientific_calculator
+package com.oreveon.scientific_calculator
 
 import android.os.Build
 import android.os.Bundle

@@ -1,11 +1,20 @@
+import java.util.Properties
+import java.io.FileInputStream
+
 plugins {
     id("com.android.application")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
 }
 
+val keystorePropertiesFile = rootProject.file("key.properties")
+val keystoreProperties = Properties()
+if (keystorePropertiesFile.exists()) {
+    keystoreProperties.load(FileInputStream(keystorePropertiesFile))
+}
+
 android {
-    namespace = "com.example.scientific_calculator"
+    namespace = "com.oreveon.scientific_calculator"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -14,25 +23,36 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
+    signingConfigs {
+        create("release") {
+            val storeFilePath = keystoreProperties.getProperty("storeFile")
+            if (storeFilePath != null) {
+                val candidateFile = file(storeFilePath)
+                storeFile = if (candidateFile.exists()) candidateFile else rootProject.file(storeFilePath)
+                storePassword = keystoreProperties.getProperty("storePassword")
+                keyAlias = keystoreProperties.getProperty("keyAlias")
+                keyPassword = keystoreProperties.getProperty("keyPassword")
+            }
+        }
+    }
+
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId = "com.example.scientific_calculator"
-        // You can update the following values to match your application needs.
-        // For more information, see: https://flutter.dev/to/review-gradle-config.
+        applicationId = "com.oreveon.scientific_calculator"
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
-        // Uses the version code from pubspec.yaml. When using split APKs, 1000 * ABI_VERSION
-        // is added automatically by Flutter. (https://developer.android.com/studio/build/configure-apk-splits#configure-APK-versions)
-        // You can force using the value of versionCode by specifying the `-P force-version-code-ignoring-abi=true`
-        // flag during build.
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+        multiDexEnabled = true
     }
 
     buildTypes {
         release {
-            // Signing with debug keys so `flutter build apk --release` works out of the box.
-            signingConfig = signingConfigs.getByName("debug")
+            val releaseSigning = signingConfigs.findByName("release")
+            signingConfig = if (releaseSigning?.storeFile?.exists() == true) {
+                releaseSigning
+            } else {
+                signingConfigs.getByName("debug")
+            }
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(
@@ -41,6 +61,10 @@ android {
             )
         }
     }
+}
+
+dependencies {
+    implementation("androidx.multidex:multidex:2.0.1")
 }
 
 kotlin {
@@ -52,3 +76,4 @@ kotlin {
 flutter {
     source = "../.."
 }
+
